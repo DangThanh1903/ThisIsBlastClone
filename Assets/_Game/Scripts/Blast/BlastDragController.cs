@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace ThisIsBlast.Gameplay
@@ -7,15 +6,8 @@ namespace ThisIsBlast.Gameplay
     public sealed class BlastDragController : MonoBehaviour
     {
         [SerializeField] private BlastItem blastItem;
-        [SerializeField] private BoardController boardController;
-        [SerializeField] private BoardMatcher boardMatcher;
-        [SerializeField] private BoardGravity boardGravity;
+        [SerializeField] private BlastItemSpawner itemSpawner;
         [SerializeField] private LevelController levelController;
-
-        private Camera mainCamera;
-        private Vector3 startPosition;
-        private Vector3 dragOffset;
-        private bool isDragging;
 
         private void Awake()
         {
@@ -25,124 +17,38 @@ namespace ThisIsBlast.Gameplay
             }
 
             ResolveDependencies();
-            mainCamera = Camera.main;
         }
 
-        public void Configure(
-            BoardController board,
-            BoardMatcher matcher,
-            BoardGravity gravity,
-            LevelController level)
+        public void Configure(BlastItemSpawner spawner, LevelController level)
         {
-            boardController = board;
-            boardMatcher = matcher;
-            boardGravity = gravity;
+            itemSpawner = spawner;
             levelController = level;
         }
 
         private void OnMouseDown()
         {
-            if (!CanDrag())
+            if (!CanActivate())
             {
                 return;
             }
 
-            isDragging = true;
-            startPosition = transform.position;
-
-            Vector3 pointerWorldPosition = CameraUtils.GetPointerWorldPositionOnPlane(mainCamera, boardController.BoardPlaneY);
-            dragOffset = transform.position - pointerWorldPosition;
+            itemSpawner.ActivateItem(blastItem);
         }
 
-        private void OnMouseDrag()
-        {
-            if (!isDragging)
-            {
-                return;
-            }
-
-            Vector3 pointerWorldPosition = CameraUtils.GetPointerWorldPositionOnPlane(mainCamera, boardController.BoardPlaneY);
-            Vector3 targetPosition = pointerWorldPosition + dragOffset;
-            targetPosition.y = startPosition.y;
-            transform.position = targetPosition;
-        }
-
-        private void OnMouseUp()
-        {
-            if (!isDragging)
-            {
-                return;
-            }
-
-            isDragging = false;
-            TryDropOnBoard();
-        }
-
-        private bool CanDrag()
+        private bool CanActivate()
         {
             ResolveDependencies();
             return blastItem != null
-                && boardController != null
-                && boardMatcher != null
-                && boardGravity != null
+                && itemSpawner != null
                 && levelController != null
                 && levelController.State == GameState.Playing;
         }
 
-        private void TryDropOnBoard()
-        {
-            GridPosition gridPosition = boardController.WorldToGrid(transform.position);
-            if (!boardController.IsInsideGrid(gridPosition))
-            {
-                ResetToStartPosition();
-                return;
-            }
-
-            Block targetBlock = boardController.GetBlock(gridPosition.X, gridPosition.Y);
-            if (targetBlock == null || targetBlock.Color != blastItem.Color)
-            {
-                ResetToStartPosition();
-                return;
-            }
-
-            List<Block> connectedBlocks = boardMatcher.GetConnectedBlocks(
-                boardController,
-                gridPosition.X,
-                gridPosition.Y,
-                blastItem.Color);
-
-            if (connectedBlocks.Count == 0)
-            {
-                ResetToStartPosition();
-                return;
-            }
-
-            boardController.RemoveBlocks(connectedBlocks);
-            boardGravity.ApplyGravity(boardController);
-            levelController.CheckWinCondition();
-            Destroy(gameObject);
-        }
-
-        private void ResetToStartPosition()
-        {
-            transform.position = startPosition;
-        }
-
         private void ResolveDependencies()
         {
-            if (boardController == null)
+            if (itemSpawner == null)
             {
-                boardController = FindFirstObjectByType<BoardController>();
-            }
-
-            if (boardMatcher == null)
-            {
-                boardMatcher = FindFirstObjectByType<BoardMatcher>();
-            }
-
-            if (boardGravity == null)
-            {
-                boardGravity = FindFirstObjectByType<BoardGravity>();
+                itemSpawner = FindFirstObjectByType<BlastItemSpawner>();
             }
 
             if (levelController == null)

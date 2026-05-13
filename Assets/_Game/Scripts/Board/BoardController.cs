@@ -5,6 +5,8 @@ namespace ThisIsBlast.Gameplay
 {
     public sealed class BoardController : MonoBehaviour
     {
+        private const string DefaultBlockPrefabPath = "Assets/_Game/Prefabs/Board/Block.prefab";
+
         [SerializeField] private int width;
         [SerializeField] private int height;
         [SerializeField] private float cellSize = 0.6f;
@@ -12,6 +14,7 @@ namespace ThisIsBlast.Gameplay
         [SerializeField] private Block blockPrefab;
         [SerializeField] private Transform boardRoot;
         [SerializeField, Range(0.1f, 1f)] private float blockFill = 0.92f;
+        [SerializeField] private bool logSpawnSummary = true;
 
         private Block[,] grid;
 
@@ -31,8 +34,12 @@ namespace ThisIsBlast.Gameplay
 
             if (blockPrefab == null)
             {
-                Debug.LogError("BoardController is missing a Block prefab.");
-                return;
+                blockPrefab = LoadDefaultBlockPrefabInEditor();
+                if (blockPrefab == null)
+                {
+                    Debug.LogError("BoardController is missing a Block prefab.");
+                    return;
+                }
             }
 
             ClearBoard();
@@ -42,6 +49,7 @@ namespace ThisIsBlast.Gameplay
             grid = new Block[width, height];
 
             Transform parent = boardRoot != null ? boardRoot : transform;
+            int spawnedBlockCount = 0;
 
             for (int y = 0; y < height; y++)
             {
@@ -59,7 +67,13 @@ namespace ThisIsBlast.Gameplay
                     block.transform.localScale = Vector3.one * cellSize * blockFill;
                     block.Init(x, y, cell.Color, cell.Hp);
                     grid[x, y] = block;
+                    spawnedBlockCount++;
                 }
+            }
+
+            if (logSpawnSummary)
+            {
+                Debug.Log($"Board spawned {spawnedBlockCount} blocks from level '{levelData.LevelId}' ({width}x{height}).");
             }
         }
 
@@ -110,6 +124,48 @@ namespace ThisIsBlast.Gameplay
 
                 Destroy(block.gameObject);
             }
+        }
+
+        public void RemoveBlock(Block block)
+        {
+            if (block == null || !IsInsideGrid(block.X, block.Y))
+            {
+                return;
+            }
+
+            if (grid[block.X, block.Y] == block)
+            {
+                grid[block.X, block.Y] = null;
+            }
+
+            Destroy(block.gameObject);
+        }
+
+        public Block FindLowestBlockOfColor(BlockColor color, Vector3 shooterWorldPosition)
+        {
+            Block bestBlock = null;
+            float bestDistance = float.MaxValue;
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    Block block = GetBlock(x, y);
+                    if (block == null || block.Color != color)
+                    {
+                        continue;
+                    }
+
+                    float distance = Mathf.Abs(GridToWorld(x, y).x - shooterWorldPosition.x);
+                    if (bestBlock == null || y < bestBlock.Y || y == bestBlock.Y && distance < bestDistance)
+                    {
+                        bestBlock = block;
+                        bestDistance = distance;
+                    }
+                }
+            }
+
+            return bestBlock;
         }
 
         public bool IsCleared()
@@ -197,6 +253,16 @@ namespace ThisIsBlast.Gameplay
             }
 
             grid[x, y] = block;
+        }
+
+        private Block LoadDefaultBlockPrefabInEditor()
+        {
+#if UNITY_EDITOR
+            GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(DefaultBlockPrefabPath);
+            return prefab != null ? prefab.GetComponent<Block>() : null;
+#else
+            return null;
+#endif
         }
     }
 }

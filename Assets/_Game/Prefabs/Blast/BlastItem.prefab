@@ -204,9 +204,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThisIsBlast.Gameplay.BlastDragController
   blastItem: {fileID: 0}
-  boardController: {fileID: 0}
-  boardMatcher: {fileID: 0}
-  boardGravity: {fileID: 0}
+  itemSpawner: {fileID: 0}
   levelController: {fileID: 0}
 --- !u!1001 &7544195836986502911
 PrefabInstance:

@@ -9,16 +9,18 @@ namespace ThisIsBlast.Gameplay
 
         [SerializeField] private Renderer[] targetRenderers;
 
-        private readonly MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+        private MaterialPropertyBlock propertyBlock;
 
         private void Awake()
         {
             CacheRenderersIfNeeded();
+            EnsurePropertyBlock();
         }
 
         public void SetColor(BlockColor color)
         {
             CacheRenderersIfNeeded();
+            EnsurePropertyBlock();
 
             Color unityColor = GetUnityColor(color);
             propertyBlock.SetColor(ColorId, unityColor);
@@ -43,6 +45,14 @@ namespace ThisIsBlast.Gameplay
             }
 
             targetRenderers = GetComponentsInChildren<Renderer>(true);
+        }
+
+        private void EnsurePropertyBlock()
+        {
+            if (propertyBlock == null)
+            {
+                propertyBlock = new MaterialPropertyBlock();
+            }
         }
 
         public static Color GetUnityColor(BlockColor color)

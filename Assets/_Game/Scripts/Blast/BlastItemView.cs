@@ -10,11 +10,12 @@ namespace ThisIsBlast.Gameplay
         [SerializeField] private Renderer[] targetRenderers;
         [SerializeField] private TextMesh powerText;
 
-        private readonly MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+        private MaterialPropertyBlock propertyBlock;
 
         private void Awake()
         {
             CacheRenderersIfNeeded();
+            EnsurePropertyBlock();
             
             if (powerText == null)
             {
@@ -25,6 +26,7 @@ namespace ThisIsBlast.Gameplay
         public void SetData(BlockColor color, int power)
         {
             CacheRenderersIfNeeded();
+            EnsurePropertyBlock();
 
             Color unityColor = BlockView.GetUnityColor(color);
             propertyBlock.SetColor(ColorId, unityColor);
@@ -69,6 +71,14 @@ namespace ThisIsBlast.Gameplay
             for (int i = 0; i < writeIndex; i++)
             {
                 targetRenderers[i] = renderers[i];
+            }
+        }
+
+        private void EnsurePropertyBlock()
+        {
+            if (propertyBlock == null)
+            {
+                propertyBlock = new MaterialPropertyBlock();
             }
         }
     }

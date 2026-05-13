@@ -14,7 +14,8 @@ namespace ThisIsBlast.EditorTools
         private const string ScenePath = RootPath + "/Scenes/Gameplay.unity";
         private const string BlockPrefabPath = RootPath + "/Prefabs/Board/Block.prefab";
         private const string BlastItemPrefabPath = RootPath + "/Prefabs/Blast/BlastItem.prefab";
-        private const string LevelPath = RootPath + "/ScriptableObjects/Levels/Level_01.asset";
+        private const string Level01Path = RootPath + "/ScriptableObjects/Levels/Level_01.asset";
+        private const string Level02Path = RootPath + "/ScriptableObjects/Levels/Level_02.asset";
 
         private const string DefaultBlockModelPath = "Assets/Models/Cube1.obj";
         private const string DefaultBlastItemModelPath = "Assets/Models/Ball.obj";
@@ -27,6 +28,7 @@ namespace ThisIsBlast.EditorTools
             Block blockPrefab = CreateBlockPrefab();
             BlastItem blastItemPrefab = CreateBlastItemPrefab();
             LevelData levelData = CreateLevel01();
+            CreateLevel02();
 
             CreateGameplayScene(levelData, blockPrefab, blastItemPrefab);
 
@@ -39,6 +41,24 @@ namespace ThisIsBlast.EditorTools
         public static void BuildFromCommandLine()
         {
             Build();
+        }
+
+        [MenuItem("Tools/This Is Blast/Build Gameplay Prototype Level 02")]
+        public static void BuildLevel02()
+        {
+            EnsureProjectFolders();
+
+            Block blockPrefab = CreateBlockPrefab();
+            BlastItem blastItemPrefab = CreateBlastItemPrefab();
+            CreateLevel01();
+            LevelData levelData = CreateLevel02();
+
+            CreateGameplayScene(levelData, blockPrefab, blastItemPrefab);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Debug.Log("3D gameplay prototype generated with Level 02. Open Assets/_Game/Scenes/Gameplay.unity and press Play.");
         }
 
         private static void EnsureProjectFolders()
@@ -96,7 +116,8 @@ namespace ThisIsBlast.EditorTools
             GameObject prefabObject = PrefabUtility.SaveAsPrefabAsset(blockObject, BlockPrefabPath);
             Object.DestroyImmediate(blockObject);
 
-            return prefabObject.GetComponent<Block>();
+            AssetDatabase.ImportAsset(BlockPrefabPath, ImportAssetOptions.ForceUpdate);
+            return AssetDatabase.LoadAssetAtPath<GameObject>(BlockPrefabPath).GetComponent<Block>();
         }
 
         private static BlastItem CreateBlastItemPrefab()
@@ -122,7 +143,8 @@ namespace ThisIsBlast.EditorTools
             GameObject prefabObject = PrefabUtility.SaveAsPrefabAsset(itemObject, BlastItemPrefabPath);
             Object.DestroyImmediate(itemObject);
 
-            return prefabObject.GetComponent<BlastItem>();
+            AssetDatabase.ImportAsset(BlastItemPrefabPath, ImportAssetOptions.ForceUpdate);
+            return AssetDatabase.LoadAssetAtPath<GameObject>(BlastItemPrefabPath).GetComponent<BlastItem>();
         }
 
         private static GameObject CreateModelChild(
@@ -215,11 +237,11 @@ namespace ThisIsBlast.EditorTools
 
         private static LevelData CreateLevel01()
         {
-            LevelData levelData = AssetDatabase.LoadAssetAtPath<LevelData>(LevelPath);
+            LevelData levelData = AssetDatabase.LoadAssetAtPath<LevelData>(Level01Path);
             if (levelData == null)
             {
                 levelData = ScriptableObject.CreateInstance<LevelData>();
-                AssetDatabase.CreateAsset(levelData, LevelPath);
+                AssetDatabase.CreateAsset(levelData, Level01Path);
             }
 
             levelData.SetLevelInfo("level_01", 1);
@@ -240,6 +262,55 @@ namespace ThisIsBlast.EditorTools
 
             EditorUtility.SetDirty(levelData);
             return levelData;
+        }
+
+        private static LevelData CreateLevel02()
+        {
+            LevelData levelData = AssetDatabase.LoadAssetAtPath<LevelData>(Level02Path);
+            if (levelData == null)
+            {
+                levelData = ScriptableObject.CreateInstance<LevelData>();
+                AssetDatabase.CreateAsset(levelData, Level02Path);
+            }
+
+            levelData.SetLevelInfo("level_02", 2);
+            levelData.Initialize(10, 8, BlockColor.Yellow);
+            levelData.SetWinCondition(WinConditionType.ClearAllBlocks);
+            levelData.SetStartingBlastItems(
+                new BlastItemConfig(BlockColor.Yellow, 44),
+                new BlastItemConfig(BlockColor.Red, 30),
+                new BlastItemConfig(BlockColor.Blue, 30),
+                new BlastItemConfig(BlockColor.Red, 30),
+                new BlastItemConfig(BlockColor.Blue, 30),
+                new BlastItemConfig(BlockColor.Green, 10));
+
+            BlockColor[][] rows =
+            {
+                Row(BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow),
+                Row(BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow),
+                Row(BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue),
+                Row(BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue),
+                Row(BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow, BlockColor.Yellow),
+                Row(BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue),
+                Row(BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Red, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue, BlockColor.Blue),
+                Row(BlockColor.Green, BlockColor.Green, BlockColor.Green, BlockColor.Green, BlockColor.Green, BlockColor.Green, BlockColor.Green, BlockColor.Green, BlockColor.Green, BlockColor.Green)
+            };
+
+            for (int y = 0; y < rows.Length; y++)
+            {
+                for (int x = 0; x < rows[y].Length; x++)
+                {
+                    levelData.SetBlock(x, y, rows[y][x]);
+                }
+            }
+
+            EditorUtility.SetDirty(levelData);
+            return levelData;
+        }
+
+        private static BlockColor[] Row(params BlockColor[] colors)
+        {
+            return colors;
         }
 
         private static void CreateGameplayScene(LevelData levelData, Block blockPrefab, BlastItem blastItemPrefab)
@@ -311,7 +382,10 @@ namespace ThisIsBlast.EditorTools
             SetObjectReference(blastItemSpawner, "spawnRoot", blastRoot);
             SetFloat(blastItemSpawner, "itemSpacing", 1.25f);
             SetFloat(blastItemSpawner, "boardBottomOffset", 1.25f);
+            SetFloat(blastItemSpawner, "launcherSlotOffset", 0.62f);
             SetFloat(blastItemSpawner, "itemScale", 0.75f);
+            SetInt(blastItemSpawner, "visibleItemCount", 3);
+            SetFloat(blastItemSpawner, "fireInterval", 0.08f);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);

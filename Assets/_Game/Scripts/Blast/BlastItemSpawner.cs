@@ -1,10 +1,13 @@
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
 namespace ThisIsBlast.Gameplay
 {
     public sealed class BlastItemSpawner : MonoBehaviour
     {
+        private const string DefaultBlastItemPrefabPath = "Assets/_Game/Prefabs/Blast/BlastItem.prefab";
+
         [SerializeField] private BlastItem blastItemPrefab;
         [SerializeField] private BoardController boardController;
         [SerializeField] private BoardMatcher boardMatcher;
@@ -13,14 +16,22 @@ namespace ThisIsBlast.Gameplay
         [SerializeField] private Transform spawnRoot;
         [SerializeField] private float itemSpacing = 1.2f;
         [SerializeField] private float boardBottomOffset = 1.25f;
+        [SerializeField] private float launcherSlotOffset = 0.55f;
         [SerializeField] private float itemScale = 0.75f;
+        [SerializeField] private int visibleItemCount = 3;
+        [SerializeField] private float fireInterval = 0.08f;
+        [SerializeField] private bool logSpawnSummary = true;
 
+        private readonly Queue<BlastItemConfig> pendingItems = new Queue<BlastItemConfig>();
         private readonly List<BlastItem> spawnedItems = new List<BlastItem>();
+        private readonly List<BlastItem> visibleItems = new List<BlastItem>();
+        private bool isFiring;
 
         public void SpawnItems(IReadOnlyList<BlastItemConfig> itemConfigs)
         {
             ResolveDependencies();
             ClearItems();
+            pendingItems.Clear();
 
             if (itemConfigs == null || itemConfigs.Count == 0)
             {
@@ -30,8 +41,14 @@ namespace ThisIsBlast.Gameplay
 
             for (int i = 0; i < itemConfigs.Count; i++)
             {
-                BlastItemConfig config = itemConfigs[i];
-                SpawnItem(config.Color, config.Power, i, itemConfigs.Count);
+                pendingItems.Enqueue(itemConfigs[i]);
+            }
+
+            FillVisibleItems();
+
+            if (logSpawnSummary)
+            {
+                Debug.Log($"Blast queue loaded {itemConfigs.Count} items, visible now: {visibleItems.Count}.");
             }
         }
 
@@ -56,14 +73,46 @@ namespace ThisIsBlast.Gameplay
             }
 
             spawnedItems.Clear();
+            visibleItems.Clear();
+            pendingItems.Clear();
+            isFiring = false;
+        }
+
+        public void ActivateItem(BlastItem item)
+        {
+            if (item == null || isFiring || levelController == null || levelController.State != GameState.Playing)
+            {
+                return;
+            }
+
+            int itemIndex = visibleItems.IndexOf(item);
+            if (itemIndex < 0)
+            {
+                return;
+            }
+
+            visibleItems.RemoveAt(itemIndex);
+            RepositionVisibleItems();
+            FillVisibleItems();
+
+            item.transform.position = GetLauncherSlotPosition(itemIndex);
+            StartCoroutine(FireItemRoutine(item));
         }
 
         private void SpawnItem(BlockColor color, int power, int index, int total)
         {
             if (blastItemPrefab == null || boardController == null)
             {
-                Debug.LogError("BlastItemSpawner is missing required references.");
-                return;
+                if (blastItemPrefab == null)
+                {
+                    blastItemPrefab = LoadDefaultBlastItemPrefabInEditor();
+                }
+
+                if (blastItemPrefab == null || boardController == null)
+                {
+                    Debug.LogError("BlastItemSpawner is missing required references.");
+                    return;
+                }
             }
 
             Transform parent = spawnRoot != null ? spawnRoot : transform;
@@ -77,10 +126,11 @@ namespace ThisIsBlast.Gameplay
             BlastDragController dragController = item.GetComponent<BlastDragController>();
             if (dragController != null)
             {
-                dragController.Configure(boardController, boardMatcher, boardGravity, levelController);
+                dragController.Configure(this, levelController);
             }
 
             spawnedItems.Add(item);
+            visibleItems.Add(item);
         }
 
         private Vector3 GetItemPosition(int index, int total)
@@ -94,6 +144,66 @@ namespace ThisIsBlast.Gameplay
                 firstX + index * itemSpacing,
                 boardController.BoardPlaneY,
                 boardBottomZ - boardBottomOffset);
+        }
+
+        private Vector3 GetLauncherSlotPosition(int index)
+        {
+            Vector3 bottomPosition = GetItemPosition(index, Mathf.Max(visibleItemCount, 1));
+            bottomPosition.z += launcherSlotOffset;
+            return bottomPosition;
+        }
+
+        private void FillVisibleItems()
+        {
+            while (visibleItems.Count < visibleItemCount && pendingItems.Count > 0)
+            {
+                BlastItemConfig config = pendingItems.Dequeue();
+                SpawnItem(config.Color, config.Power, visibleItems.Count, Mathf.Max(visibleItemCount, 1));
+            }
+        }
+
+        private void RepositionVisibleItems()
+        {
+            for (int i = 0; i < visibleItems.Count; i++)
+            {
+                BlastItem item = visibleItems[i];
+                if (item == null)
+                {
+                    continue;
+                }
+
+                item.transform.position = GetItemPosition(i, Mathf.Max(visibleItemCount, 1));
+            }
+        }
+
+        private IEnumerator FireItemRoutine(BlastItem item)
+        {
+            isFiring = true;
+
+            while (item != null && item.Power > 0 && levelController != null && levelController.State == GameState.Playing)
+            {
+                Block target = boardController.FindLowestBlockOfColor(item.Color, item.transform.position);
+                if (target == null)
+                {
+                    break;
+                }
+
+                boardController.RemoveBlock(target);
+                item.TryConsumePower();
+                boardGravity.ApplyGravity(boardController);
+                levelController.CheckWinCondition();
+
+                yield return new WaitForSeconds(fireInterval);
+            }
+
+            spawnedItems.Remove(item);
+
+            if (item != null)
+            {
+                Destroy(item.gameObject);
+            }
+
+            isFiring = false;
         }
 
         private void ResolveDependencies()
@@ -117,6 +227,16 @@ namespace ThisIsBlast.Gameplay
             {
                 levelController = FindFirstObjectByType<LevelController>();
             }
+        }
+
+        private BlastItem LoadDefaultBlastItemPrefabInEditor()
+        {
+#if UNITY_EDITOR
+            GameObject prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(DefaultBlastItemPrefabPath);
+            return prefab != null ? prefab.GetComponent<BlastItem>() : null;
+#else
+            return null;
+#endif
         }
     }
 }

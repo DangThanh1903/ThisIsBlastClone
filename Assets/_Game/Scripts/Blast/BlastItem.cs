@@ -22,12 +22,28 @@ namespace ThisIsBlast.Gameplay
         public void Init(BlockColor itemColor, int itemPower)
         {
             color = itemColor;
-            power = itemPower;
+            SetPower(itemPower);
+        }
+
+        public void SetPower(int value)
+        {
+            power = Mathf.Max(0, value);
 
             if (itemView != null)
             {
                 itemView.SetData(color, power);
             }
+        }
+
+        public bool TryConsumePower(int amount = 1)
+        {
+            if (power <= 0)
+            {
+                return false;
+            }
+
+            SetPower(power - Mathf.Max(1, amount));
+            return true;
         }
     }
 }
