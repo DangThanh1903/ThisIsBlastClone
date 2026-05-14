@@ -4,6 +4,7 @@ namespace ThisIsBlast.Gameplay
     {
         NotStarted,
         Playing,
-        Won
+        Won,
+        Lost
     }
 }

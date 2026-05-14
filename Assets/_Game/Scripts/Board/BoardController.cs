@@ -62,10 +62,12 @@ namespace ThisIsBlast.Gameplay
                         continue;
                     }
 
-                    Block block = Instantiate(blockPrefab, GridToWorld(x, y), Quaternion.identity, parent);
+                    Vector3 finalPosition = GridToWorld(x, y);
+                    Block block = Instantiate(blockPrefab, finalPosition, Quaternion.identity, parent);
                     block.name = $"Block_{x}_{y}";
                     block.transform.localScale = Vector3.one * cellSize * blockFill;
                     block.Init(x, y, cell.Color, cell.Hp);
+
                     grid[x, y] = block;
                     spawnedBlockCount++;
                 }
@@ -141,31 +143,50 @@ namespace ThisIsBlast.Gameplay
             Destroy(block.gameObject);
         }
 
-        public Block FindLowestBlockOfColor(BlockColor color, Vector3 shooterWorldPosition)
+        public bool TryRemoveBottomBlockOfColor(BlockColor color, int startColumn, out int removedColumn)
         {
-            Block bestBlock = null;
-            float bestDistance = float.MaxValue;
+            removedColumn = -1;
 
-            for (int y = 0; y < height; y++)
+            if (width <= 0)
             {
-                for (int x = 0; x < width; x++)
-                {
-                    Block block = GetBlock(x, y);
-                    if (block == null || block.Color != color)
-                    {
-                        continue;
-                    }
+                return false;
+            }
 
-                    float distance = Mathf.Abs(GridToWorld(x, y).x - shooterWorldPosition.x);
-                    if (bestBlock == null || y < bestBlock.Y || y == bestBlock.Y && distance < bestDistance)
-                    {
-                        bestBlock = block;
-                        bestDistance = distance;
-                    }
+            int normalizedStartColumn = Mathf.Clamp(startColumn, 0, width - 1);
+
+            for (int offset = 0; offset < width; offset++)
+            {
+                int x = (normalizedStartColumn + offset) % width;
+                Block block = GetBlock(x, 0);
+                if (block == null
+                    || block.Y != 0
+                    || block.Color != color)
+                {
+                    continue;
+                }
+
+                RemoveBlock(block);
+                removedColumn = x;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool HasBottomBlockOfColor(BlockColor color)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Block block = GetBlock(x, 0);
+                if (block != null
+                    && block.Y == 0
+                    && block.Color == color)
+                {
+                    return true;
                 }
             }
 
-            return bestBlock;
+            return false;
         }
 
         public bool IsCleared()

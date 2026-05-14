@@ -446,7 +446,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6015764041f3f7844b119fda173b4293, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ThisIsBlast.Gameplay.GameplayHUD
   levelLabel: Level 1
 --- !u!4 &459471892
@@ -565,7 +565,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5.2
+  orthographic size: 6
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -589,13 +589,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 891581649}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.4848096, y: 0, z: 0, w: 0.8746197}
-  m_LocalPosition: {x: 0, y: 7, z: -7}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 10, z: 0.65}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!1 &985477719
 GameObject:
   m_ObjectHideFlags: 0
@@ -662,12 +662,16 @@ MonoBehaviour:
   boardGravity: {fileID: 2145607684}
   levelController: {fileID: 593738764}
   spawnRoot: {fileID: 317814486}
+  activeSlotVisualRoot: {fileID: 0}
   itemSpacing: 1.25
   boardBottomOffset: 1.25
-  launcherSlotOffset: 0.62
+  activeSlotCount: 5
+  activeSlotSpacing: 0.85
+  activeSlotBoardOffset: 0.35
   itemScale: 0.75
   visibleItemCount: 3
   fireInterval: 0.08
+  activeSlotColor: {r: 0.16, g: 0.33, b: 0.48, a: 0.85}
   logSpawnSummary: 1
 --- !u!4 &1015107585
 Transform:
@@ -761,6 +765,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5021515f07bfb754096421c91fd43ff4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThisIsBlast.Gameplay.BoardGravity
+  fallSpeed: 6
 --- !u!114 &2145607685
 MonoBehaviour:
   m_ObjectHideFlags: 0

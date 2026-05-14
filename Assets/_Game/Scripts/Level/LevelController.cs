@@ -59,6 +59,17 @@ namespace ThisIsBlast.Gameplay
             gameplayHUD?.ShowWin();
         }
 
+        public void LoseLevel()
+        {
+            if (State != GameState.Playing)
+            {
+                return;
+            }
+
+            State = GameState.Lost;
+            gameplayHUD?.ShowLose();
+        }
+
         private bool IsWinConditionMet()
         {
             if (levelData == null)

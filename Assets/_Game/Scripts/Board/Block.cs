@@ -11,11 +11,15 @@ namespace ThisIsBlast.Gameplay
         [SerializeField] private BlockColor color;
         [SerializeField] private int hp = 1;
 
+        private Vector3 targetWorldPosition;
+        private bool isMoving;
+
         public int X => x;
         public int Y => y;
         public BlockColor Color => color;
         public int Hp => hp;
         public BlockView View => blockView;
+        public bool IsMoving => isMoving;
 
         private void Awake()
         {
@@ -23,6 +27,8 @@ namespace ThisIsBlast.Gameplay
             {
                 blockView = GetComponent<BlockView>();
             }
+
+            targetWorldPosition = transform.position;
         }
 
         public void Init(int gridX, int gridY, BlockColor blockColor, int blockHp = 1)
@@ -41,6 +47,38 @@ namespace ThisIsBlast.Gameplay
         {
             x = gridX;
             y = gridY;
+        }
+
+        public void BeginMove(Vector3 worldPosition)
+        {
+            targetWorldPosition = worldPosition;
+            isMoving = true;
+        }
+
+        public void MoveStep(float maxDistance)
+        {
+            if (!isMoving)
+            {
+                return;
+            }
+
+            transform.position = Vector3.MoveTowards(transform.position, targetWorldPosition, maxDistance);
+
+            if ((transform.position - targetWorldPosition).sqrMagnitude <= 0.0001f)
+            {
+                SnapToTarget();
+            }
+        }
+
+        public void SnapToTarget()
+        {
+            transform.position = targetWorldPosition;
+            isMoving = false;
+        }
+
+        public bool IsAtWorldPosition(Vector3 worldPosition)
+        {
+            return (transform.position - worldPosition).sqrMagnitude <= 0.0001f;
         }
     }
 }

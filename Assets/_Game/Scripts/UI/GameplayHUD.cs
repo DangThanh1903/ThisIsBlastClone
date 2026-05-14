@@ -7,6 +7,7 @@ namespace ThisIsBlast.Gameplay
         [SerializeField] private string levelLabel = "Level 1";
 
         private bool showWin;
+        private bool showLose;
         private int remainingBlockCount;
 
         public void ShowLevel(int levelNumber)
@@ -22,11 +23,19 @@ namespace ThisIsBlast.Gameplay
         public void ShowWin()
         {
             showWin = true;
+            showLose = false;
+        }
+
+        public void ShowLose()
+        {
+            showWin = false;
+            showLose = true;
         }
 
         public void HideWin()
         {
             showWin = false;
+            showLose = false;
         }
 
         private void OnGUI()
@@ -42,12 +51,12 @@ namespace ThisIsBlast.Gameplay
             GUI.Label(new Rect(margin, margin, 220, 40), levelLabel, labelStyle);
             GUI.Label(new Rect(margin, margin + 38, 260, 40), $"Blocks: {remainingBlockCount}", labelStyle);
 
-            if (!showWin)
+            if (!showWin && !showLose)
             {
                 return;
             }
 
-            GUIStyle winStyle = new GUIStyle(GUI.skin.label)
+            GUIStyle resultStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
                 fontSize = 52,
@@ -55,7 +64,7 @@ namespace ThisIsBlast.Gameplay
                 normal = { textColor = Color.white }
             };
 
-            GUI.Label(new Rect(0, Screen.height * 0.42f, Screen.width, 90), "WIN", winStyle);
+            GUI.Label(new Rect(0, Screen.height * 0.42f, Screen.width, 90), showWin ? "WIN" : "LOSE", resultStyle);
         }
     }
 }

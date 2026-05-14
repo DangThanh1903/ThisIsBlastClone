@@ -219,7 +219,7 @@ namespace ThisIsBlast.EditorTools
             GameObject textObject = new GameObject("PowerText");
             textObject.transform.SetParent(parent, false);
             textObject.transform.localPosition = new Vector3(0f, 1.0f, -0.08f);
-            textObject.transform.localRotation = Quaternion.Euler(65f, 0f, 0f);
+            textObject.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
 
             TextMesh textMesh = textObject.AddComponent<TextMesh>();
             textMesh.text = "0";
@@ -319,10 +319,10 @@ namespace ThisIsBlast.EditorTools
 
             Camera camera = new GameObject("Main Camera").AddComponent<Camera>();
             camera.tag = "MainCamera";
-            camera.transform.position = new Vector3(0f, 7f, -7f);
-            camera.transform.rotation = Quaternion.Euler(58f, 0f, 0f);
+            camera.transform.position = new Vector3(0f, 10f, 0.65f);
+            camera.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
             camera.orthographic = true;
-            camera.orthographicSize = 5.2f;
+            camera.orthographicSize = 6f;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.08f, 0.1f, 0.14f);
 
@@ -355,7 +355,6 @@ namespace ThisIsBlast.EditorTools
 
             BoardMatcher boardMatcher = boardObject.GetComponent<BoardMatcher>();
             BoardGravity boardGravity = boardObject.GetComponent<BoardGravity>();
-
             SetObjectReference(gameBootstrap, "levelController", levelController);
 
             SetInt(boardController, "width", 10);
@@ -382,10 +381,13 @@ namespace ThisIsBlast.EditorTools
             SetObjectReference(blastItemSpawner, "spawnRoot", blastRoot);
             SetFloat(blastItemSpawner, "itemSpacing", 1.25f);
             SetFloat(blastItemSpawner, "boardBottomOffset", 1.25f);
-            SetFloat(blastItemSpawner, "launcherSlotOffset", 0.62f);
+            SetInt(blastItemSpawner, "activeSlotCount", 5);
+            SetFloat(blastItemSpawner, "activeSlotSpacing", 0.85f);
+            SetFloat(blastItemSpawner, "activeSlotBoardOffset", 0.35f);
             SetFloat(blastItemSpawner, "itemScale", 0.75f);
             SetInt(blastItemSpawner, "visibleItemCount", 3);
             SetFloat(blastItemSpawner, "fireInterval", 0.08f);
+            SetFloat(boardGravity, "fallSpeed", 6f);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
