@@ -491,11 +491,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0de64137b8efb7c46a582fdf4b191449, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ThisIsBlast.Gameplay.LevelController
   levelNumber: 1
   levelData: {fileID: 11400000, guid: cd756ad4ad7a3d849b6db97243c89527, type: 2}
   boardController: {fileID: 2145607686}
+  boardGravity: {fileID: 2145607684}
   blastItemSpawner: {fileID: 1015107584}
   gameplayHUD: {fileID: 459471891}
 --- !u!4 &593738765
@@ -637,6 +638,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1015107585}
   - component: {fileID: 1015107584}
+  - component: {fileID: 1015107586}
+  - component: {fileID: 1015107587}
   m_Layer: 0
   m_Name: BlastItemSpawner
   m_TagString: Untagged
@@ -654,13 +657,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 412e378c778cf7248b5dfa2153183ba9, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ThisIsBlast.Gameplay.BlastItemSpawner
   blastItemPrefab: {fileID: 330270700721697827, guid: 5b9e8ed8d68c789468df2072a23f0d63, type: 3}
   boardController: {fileID: 2145607686}
-  boardMatcher: {fileID: 2145607685}
   boardGravity: {fileID: 2145607684}
   levelController: {fileID: 593738764}
+  shotController: {fileID: 1015107586}
+  loseConditionEvaluator: {fileID: 1015107587}
   spawnRoot: {fileID: 317814486}
   activeSlotVisualRoot: {fileID: 0}
   itemSpacing: 1.25
@@ -670,9 +674,40 @@ MonoBehaviour:
   activeSlotBoardOffset: 0.35
   itemScale: 0.75
   visibleItemCount: 3
-  fireInterval: 0.08
   activeSlotColor: {r: 0.16, g: 0.33, b: 0.48, a: 0.85}
   logSpawnSummary: 1
+--- !u!114 &1015107586
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1015107583}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 892143b0c6464c58b97e2c55186d3304, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ThisIsBlast.Gameplay.BlastShotController
+  boardController: {fileID: 2145607686}
+  boardGravity: {fileID: 2145607684}
+  levelController: {fileID: 593738764}
+  fireInterval: 0.04
+  projectileSpeed: 14
+  projectileScale: 0.18
+--- !u!114 &1015107587
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1015107583}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6126c535b1e049bbbede575c913fb3b9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ThisIsBlast.Gameplay.BlastLoseConditionEvaluator
+  boardController: {fileID: 2145607686}
+  levelController: {fileID: 593738764}
 --- !u!4 &1015107585
 Transform:
   m_ObjectHideFlags: 0

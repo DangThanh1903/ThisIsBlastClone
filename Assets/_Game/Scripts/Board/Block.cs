@@ -13,6 +13,7 @@ namespace ThisIsBlast.Gameplay
 
         private Vector3 targetWorldPosition;
         private bool isMoving;
+        private bool isShotted;
 
         public int X => x;
         public int Y => y;
@@ -20,6 +21,7 @@ namespace ThisIsBlast.Gameplay
         public int Hp => hp;
         public BlockView View => blockView;
         public bool IsMoving => isMoving;
+        public bool IsShotted => isShotted;
 
         private void Awake()
         {
@@ -35,6 +37,7 @@ namespace ThisIsBlast.Gameplay
         {
             color = blockColor;
             hp = Mathf.Max(1, blockHp);
+            isShotted = false;
             SetGridPosition(gridX, gridY);
 
             if (blockView != null)
@@ -47,6 +50,16 @@ namespace ThisIsBlast.Gameplay
         {
             x = gridX;
             y = gridY;
+        }
+
+        public void MarkShotted()
+        {
+            isShotted = true;
+        }
+
+        public void ClearShotted()
+        {
+            isShotted = false;
         }
 
         public void BeginMove(Vector3 worldPosition)

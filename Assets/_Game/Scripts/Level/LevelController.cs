@@ -7,6 +7,7 @@ namespace ThisIsBlast.Gameplay
         [SerializeField] private int levelNumber = 1;
         [SerializeField] private LevelData levelData;
         [SerializeField] private BoardController boardController;
+        [SerializeField] private BoardGravity boardGravity;
         [SerializeField] private BlastItemSpawner blastItemSpawner;
         [SerializeField] private GameplayHUD gameplayHUD;
 
@@ -19,17 +20,16 @@ namespace ThisIsBlast.Gameplay
                 return;
             }
 
-            ResolveDependencies();
-
-            if (levelData == null || boardController == null)
+            if (!HasRequiredDependencies())
             {
-                Debug.LogError("LevelController is missing LevelData or BoardController.");
+                Debug.LogError("LevelController is missing required gameplay references.");
                 return;
             }
 
             State = GameState.Playing;
             boardController.SpawnBoard(levelData);
-            blastItemSpawner?.SpawnItems(levelData.StartingBlastItems);
+            blastItemSpawner.Configure(boardController, boardGravity, this);
+            blastItemSpawner.SpawnItems(levelData.StartingBlastItems);
 
             if (gameplayHUD != null)
             {
@@ -86,22 +86,12 @@ namespace ThisIsBlast.Gameplay
             }
         }
 
-        private void ResolveDependencies()
+        private bool HasRequiredDependencies()
         {
-            if (boardController == null)
-            {
-                boardController = FindFirstObjectByType<BoardController>();
-            }
-
-            if (blastItemSpawner == null)
-            {
-                blastItemSpawner = FindFirstObjectByType<BlastItemSpawner>();
-            }
-
-            if (gameplayHUD == null)
-            {
-                gameplayHUD = FindFirstObjectByType<GameplayHUD>();
-            }
+            return levelData != null
+                && boardController != null
+                && boardGravity != null
+                && blastItemSpawner != null;
         }
     }
 }

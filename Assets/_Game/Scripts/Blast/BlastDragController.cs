@@ -15,8 +15,6 @@ namespace ThisIsBlast.Gameplay
             {
                 blastItem = GetComponent<BlastItem>();
             }
-
-            ResolveDependencies();
         }
 
         public void Configure(BlastItemSpawner spawner, LevelController level)
@@ -37,24 +35,10 @@ namespace ThisIsBlast.Gameplay
 
         private bool CanActivate()
         {
-            ResolveDependencies();
             return blastItem != null
                 && itemSpawner != null
                 && levelController != null
                 && levelController.State == GameState.Playing;
-        }
-
-        private void ResolveDependencies()
-        {
-            if (itemSpawner == null)
-            {
-                itemSpawner = FindFirstObjectByType<BlastItemSpawner>();
-            }
-
-            if (levelController == null)
-            {
-                levelController = FindFirstObjectByType<LevelController>();
-            }
         }
     }
 }

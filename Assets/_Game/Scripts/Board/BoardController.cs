@@ -145,7 +145,23 @@ namespace ThisIsBlast.Gameplay
 
         public bool TryRemoveBottomBlockOfColor(BlockColor color, int startColumn, out int removedColumn)
         {
-            removedColumn = -1;
+            if (!TryGetBottomBlockOfColor(color, startColumn, out Block block, out removedColumn))
+            {
+                return false;
+            }
+
+            RemoveBlock(block);
+            return true;
+        }
+
+        public bool TryGetBottomBlockOfColor(
+            BlockColor color,
+            int startColumn,
+            out Block targetBlock,
+            out int targetColumn)
+        {
+            targetBlock = null;
+            targetColumn = -1;
 
             if (width <= 0)
             {
@@ -160,13 +176,14 @@ namespace ThisIsBlast.Gameplay
                 Block block = GetBlock(x, 0);
                 if (block == null
                     || block.Y != 0
+                    || block.IsShotted
                     || block.Color != color)
                 {
                     continue;
                 }
 
-                RemoveBlock(block);
-                removedColumn = x;
+                targetBlock = block;
+                targetColumn = x;
                 return true;
             }
 
@@ -180,6 +197,7 @@ namespace ThisIsBlast.Gameplay
                 Block block = GetBlock(x, 0);
                 if (block != null
                     && block.Y == 0
+                    && !block.IsShotted
                     && block.Color == color)
                 {
                     return true;

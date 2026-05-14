@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Collections;
 using UnityEngine;
 
 namespace ThisIsBlast.Gameplay
@@ -10,9 +9,10 @@ namespace ThisIsBlast.Gameplay
 
         [SerializeField] private BlastItem blastItemPrefab;
         [SerializeField] private BoardController boardController;
-        [SerializeField] private BoardMatcher boardMatcher;
         [SerializeField] private BoardGravity boardGravity;
         [SerializeField] private LevelController levelController;
+        [SerializeField] private BlastShotController shotController;
+        [SerializeField] private BlastLoseConditionEvaluator loseConditionEvaluator;
         [SerializeField] private Transform spawnRoot;
         [SerializeField] private Transform activeSlotVisualRoot;
         [SerializeField] private float itemSpacing = 1.2f;
@@ -22,7 +22,6 @@ namespace ThisIsBlast.Gameplay
         [SerializeField] private float activeSlotBoardOffset = 0.35f;
         [SerializeField] private float itemScale = 0.75f;
         [SerializeField] private int visibleItemCount = 3;
-        [SerializeField] private float fireInterval = 0.08f;
         [SerializeField] private Color activeSlotColor = new Color(0.16f, 0.33f, 0.48f, 0.85f);
         [SerializeField] private bool logSpawnSummary = true;
 
@@ -30,12 +29,21 @@ namespace ThisIsBlast.Gameplay
         private readonly List<BlastItem> spawnedItems = new List<BlastItem>();
         private readonly List<BlastItem> visibleItems = new List<BlastItem>();
         private readonly List<BlastItem> activeItems = new List<BlastItem>();
-        private readonly Dictionary<BlockColor, int> nextFireColumnsByColor = new Dictionary<BlockColor, int>();
-        private bool isFiring;
+
+        public void Configure(BoardController board, BoardGravity gravity, LevelController level)
+        {
+            boardController = board;
+            boardGravity = gravity;
+            levelController = level;
+
+            EnsureLocalControllers();
+            ConfigureLocalControllers();
+        }
 
         public void SpawnItems(IReadOnlyList<BlastItemConfig> itemConfigs)
         {
-            ResolveDependencies();
+            EnsureLocalControllers();
+            ConfigureLocalControllers();
             ClearItems();
             pendingItems.Clear();
             CreateActiveSlotVisuals();
@@ -82,14 +90,14 @@ namespace ThisIsBlast.Gameplay
             spawnedItems.Clear();
             visibleItems.Clear();
             activeItems.Clear();
-            nextFireColumnsByColor.Clear();
             pendingItems.Clear();
-            isFiring = false;
+            shotController?.ResetShots();
         }
 
         public void ActivateItem(BlastItem item)
         {
-            ResolveDependencies();
+            EnsureLocalControllers();
+            ConfigureLocalControllers();
 
             if (item == null
                 || boardController == null
@@ -109,19 +117,16 @@ namespace ThisIsBlast.Gameplay
 
             visibleItems.Remove(item);
             activeItems.Add(item);
-            if (!nextFireColumnsByColor.ContainsKey(item.Color))
-            {
-                nextFireColumnsByColor[item.Color] = 0;
-            }
+            shotController.EnsureColorCursor(item.Color);
 
             item.transform.position = GetActiveSlotPosition(activeItems.Count - 1);
 
             RepositionVisibleItems();
             FillVisibleItems();
 
-            if (!isFiring)
+            if (!shotController.IsFiring)
             {
-                StartCoroutine(FireActiveItemsRoutine());
+                shotController.StartFiring(activeItems, ConsumeActiveItem, CheckLoseCondition);
             }
         }
 
@@ -282,63 +287,6 @@ namespace ThisIsBlast.Gameplay
             }
         }
 
-        private IEnumerator FireActiveItemsRoutine()
-        {
-            isFiring = true;
-
-            bool firedAny;
-            do
-            {
-                firedAny = false;
-
-                for (int i = 0; i < activeItems.Count && levelController.State == GameState.Playing; i++)
-                {
-                    BlastItem item = activeItems[i];
-                    if (item == null)
-                    {
-                        activeItems.RemoveAt(i);
-                        i--;
-                        continue;
-                    }
-
-                    if (item.Power <= 0)
-                    {
-                        ConsumeActiveItem(item);
-                        i--;
-                        continue;
-                    }
-
-                    nextFireColumnsByColor.TryGetValue(item.Color, out int nextColumn);
-                    if (!boardController.TryRemoveBottomBlockOfColor(item.Color, nextColumn, out int removedColumn))
-                    {
-                        continue;
-                    }
-
-                    nextFireColumnsByColor[item.Color] = (removedColumn + 1) % boardController.Width;
-                    item.TryConsumePower();
-                    boardGravity.ApplyGravity(boardController);
-                    levelController.CheckWinCondition();
-
-                    if (item.Power <= 0)
-                    {
-                        ConsumeActiveItem(item);
-                        i--;
-                    }
-
-                    firedAny = true;
-                }
-
-                if (firedAny)
-                {
-                    yield return new WaitForSeconds(fireInterval);
-                }
-            }
-            while (firedAny && levelController.State == GameState.Playing);
-
-            isFiring = false;
-            CheckLoseCondition();
-        }
-
         private void ConsumeActiveItem(BlastItem item)
         {
             spawnedItems.Remove(item);
@@ -354,56 +302,39 @@ namespace ThisIsBlast.Gameplay
 
         private void CheckLoseCondition()
         {
-            if (levelController == null
-                || levelController.State != GameState.Playing
-                || activeItems.Count < activeSlotCount)
+            if (loseConditionEvaluator == null || !loseConditionEvaluator.ShouldLose(activeItems, activeSlotCount))
             {
                 return;
             }
 
-            if (!AnyActiveItemCanFire())
-            {
-                levelController.LoseLevel();
-            }
+            levelController.LoseLevel();
         }
 
-        private bool AnyActiveItemCanFire()
+        private void EnsureLocalControllers()
         {
-            for (int i = 0; i < activeItems.Count; i++)
+            if (shotController == null)
             {
-                BlastItem item = activeItems[i];
-                if (item != null
-                    && item.Power > 0
-                    && boardController.HasBottomBlockOfColor(item.Color))
+                shotController = GetComponent<BlastShotController>();
+                if (shotController == null)
                 {
-                    return true;
+                    shotController = gameObject.AddComponent<BlastShotController>();
                 }
             }
 
-            return false;
+            if (loseConditionEvaluator == null)
+            {
+                loseConditionEvaluator = GetComponent<BlastLoseConditionEvaluator>();
+                if (loseConditionEvaluator == null)
+                {
+                    loseConditionEvaluator = gameObject.AddComponent<BlastLoseConditionEvaluator>();
+                }
+            }
         }
 
-        private void ResolveDependencies()
+        private void ConfigureLocalControllers()
         {
-            if (boardController == null)
-            {
-                boardController = FindFirstObjectByType<BoardController>();
-            }
-
-            if (boardMatcher == null)
-            {
-                boardMatcher = FindFirstObjectByType<BoardMatcher>();
-            }
-
-            if (boardGravity == null)
-            {
-                boardGravity = FindFirstObjectByType<BoardGravity>();
-            }
-
-            if (levelController == null)
-            {
-                levelController = FindFirstObjectByType<LevelController>();
-            }
+            shotController?.Configure(boardController, boardGravity, levelController);
+            loseConditionEvaluator?.Configure(boardController, levelController);
         }
 
         private BlastItem LoadDefaultBlastItemPrefabInEditor()

@@ -6,14 +6,6 @@ namespace ThisIsBlast.Gameplay
     {
         [SerializeField] private LevelController levelController;
 
-        private void Awake()
-        {
-            if (levelController == null)
-            {
-                levelController = FindFirstObjectByType<LevelController>();
-            }
-        }
-
         private void Start()
         {
             if (levelController == null)

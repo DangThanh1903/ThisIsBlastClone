@@ -347,13 +347,14 @@ namespace ThisIsBlast.EditorTools
 
             GameObject spawnerObject = new GameObject("BlastItemSpawner");
             BlastItemSpawner blastItemSpawner = spawnerObject.AddComponent<BlastItemSpawner>();
+            BlastShotController blastShotController = spawnerObject.AddComponent<BlastShotController>();
+            BlastLoseConditionEvaluator loseConditionEvaluator = spawnerObject.AddComponent<BlastLoseConditionEvaluator>();
             Transform blastRoot = new GameObject("BlastItemsRoot").transform;
             blastRoot.SetParent(spawnerObject.transform, false);
 
             GameObject hudObject = new GameObject("GameplayHUD");
             GameplayHUD gameplayHUD = hudObject.AddComponent<GameplayHUD>();
 
-            BoardMatcher boardMatcher = boardObject.GetComponent<BoardMatcher>();
             BoardGravity boardGravity = boardObject.GetComponent<BoardGravity>();
             SetObjectReference(gameBootstrap, "levelController", levelController);
 
@@ -370,14 +371,16 @@ namespace ThisIsBlast.EditorTools
             SetInt(levelController, "levelNumber", 1);
             SetObjectReference(levelController, "levelData", levelData);
             SetObjectReference(levelController, "boardController", boardController);
+            SetObjectReference(levelController, "boardGravity", boardGravity);
             SetObjectReference(levelController, "blastItemSpawner", blastItemSpawner);
             SetObjectReference(levelController, "gameplayHUD", gameplayHUD);
 
             SetObjectReference(blastItemSpawner, "blastItemPrefab", blastItemPrefab);
             SetObjectReference(blastItemSpawner, "boardController", boardController);
-            SetObjectReference(blastItemSpawner, "boardMatcher", boardMatcher);
             SetObjectReference(blastItemSpawner, "boardGravity", boardGravity);
             SetObjectReference(blastItemSpawner, "levelController", levelController);
+            SetObjectReference(blastItemSpawner, "shotController", blastShotController);
+            SetObjectReference(blastItemSpawner, "loseConditionEvaluator", loseConditionEvaluator);
             SetObjectReference(blastItemSpawner, "spawnRoot", blastRoot);
             SetFloat(blastItemSpawner, "itemSpacing", 1.25f);
             SetFloat(blastItemSpawner, "boardBottomOffset", 1.25f);
@@ -386,7 +389,14 @@ namespace ThisIsBlast.EditorTools
             SetFloat(blastItemSpawner, "activeSlotBoardOffset", 0.35f);
             SetFloat(blastItemSpawner, "itemScale", 0.75f);
             SetInt(blastItemSpawner, "visibleItemCount", 3);
-            SetFloat(blastItemSpawner, "fireInterval", 0.08f);
+            SetObjectReference(blastShotController, "boardController", boardController);
+            SetObjectReference(blastShotController, "boardGravity", boardGravity);
+            SetObjectReference(blastShotController, "levelController", levelController);
+            SetFloat(blastShotController, "fireInterval", 0.04f);
+            SetFloat(blastShotController, "projectileSpeed", 14f);
+            SetFloat(blastShotController, "projectileScale", 0.18f);
+            SetObjectReference(loseConditionEvaluator, "boardController", boardController);
+            SetObjectReference(loseConditionEvaluator, "levelController", levelController);
             SetFloat(boardGravity, "fallSpeed", 6f);
 
             EditorSceneManager.MarkSceneDirty(scene);
