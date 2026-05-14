@@ -25,7 +25,7 @@ namespace ThisIsBlast.Gameplay
                 return;
             }
 
-            Debug.LogWarning("Assets/Scenes/Game.unity has no gameplay setup. Loading Assets/_Game/Scenes/Gameplay.unity instead.");
+            Debug.LogWarning("Assets/_Game/Scenes/Game.unity has no gameplay setup. Loading Assets/_Game/Scenes/Gameplay.unity instead.");
             SceneManager.LoadScene(GameplaySceneName);
         }
     }

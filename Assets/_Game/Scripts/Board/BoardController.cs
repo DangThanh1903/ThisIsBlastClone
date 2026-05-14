@@ -66,7 +66,7 @@ namespace ThisIsBlast.Gameplay
                     Block block = Instantiate(blockPrefab, finalPosition, Quaternion.identity, parent);
                     block.name = $"Block_{x}_{y}";
                     block.transform.localScale = Vector3.one * cellSize * blockFill;
-                    block.Init(x, y, cell.Color, cell.Hp);
+                    block.Init(x, y, cell.Color);
 
                     grid[x, y] = block;
                     spawnedBlockCount++;

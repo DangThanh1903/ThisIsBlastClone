@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 namespace ThisIsBlast.Gameplay
@@ -15,9 +16,7 @@ namespace ThisIsBlast.Gameplay
         [SerializeField] private BlastLoseConditionEvaluator loseConditionEvaluator;
         [SerializeField] private Transform spawnRoot;
         [SerializeField] private Transform activeSlotVisualRoot;
-        [SerializeField] private float itemSpacing = 1.2f;
         [SerializeField] private float boardBottomOffset = 1.25f;
-        [SerializeField] private int activeSlotCount = 5;
         [SerializeField] private float activeSlotSpacing = 0.85f;
         [SerializeField] private float activeSlotBoardOffset = 0.35f;
         [SerializeField] private float itemScale = 0.75f;
@@ -28,7 +27,9 @@ namespace ThisIsBlast.Gameplay
         private readonly Queue<BlastItemConfig> pendingItems = new Queue<BlastItemConfig>();
         private readonly List<BlastItem> spawnedItems = new List<BlastItem>();
         private readonly List<BlastItem> visibleItems = new List<BlastItem>();
+        private readonly List<BlastItem> previewItems = new List<BlastItem>();
         private readonly List<BlastItem> activeItems = new List<BlastItem>();
+        private readonly Dictionary<BlastItem, int> itemSlots = new Dictionary<BlastItem, int>();
 
         public void Configure(BoardController board, BoardGravity gravity, LevelController level)
         {
@@ -89,7 +90,9 @@ namespace ThisIsBlast.Gameplay
 
             spawnedItems.Clear();
             visibleItems.Clear();
+            previewItems.Clear();
             activeItems.Clear();
+            itemSlots.Clear();
             pendingItems.Clear();
             shotController?.ResetShots();
         }
@@ -109,7 +112,7 @@ namespace ThisIsBlast.Gameplay
                 return;
             }
 
-            if (activeItems.Count >= activeSlotCount)
+            if (activeItems.Count >= visibleItemCount)
             {
                 CheckLoseCondition();
                 return;
@@ -118,11 +121,7 @@ namespace ThisIsBlast.Gameplay
             visibleItems.Remove(item);
             activeItems.Add(item);
             shotController.EnsureColorCursor(item.Color);
-
-            item.transform.position = GetActiveSlotPosition(activeItems.Count - 1);
-
-            RepositionVisibleItems();
-            FillVisibleItems();
+            RepositionActiveItems();
 
             if (!shotController.IsFiring)
             {
@@ -132,14 +131,35 @@ namespace ThisIsBlast.Gameplay
 
         private void FillVisibleItems()
         {
-            while (visibleItems.Count < visibleItemCount && pendingItems.Count > 0)
+            for (int slotIndex = 0; slotIndex < visibleItemCount && pendingItems.Count > 0; slotIndex++)
             {
+                if (IsTopSlotOccupied(slotIndex))
+                {
+                    continue;
+                }
+
                 BlastItemConfig config = pendingItems.Dequeue();
-                SpawnItem(config.Color, config.Power, visibleItems.Count, Mathf.Max(visibleItemCount, 1));
+                SpawnItem(config.Color, config.Power, slotIndex, false);
+            }
+
+            FillPreviewItems();
+        }
+
+        private void FillPreviewItems()
+        {
+            for (int slotIndex = 0; slotIndex < visibleItemCount && pendingItems.Count > 0; slotIndex++)
+            {
+                if (FindItemInSlot(previewItems, slotIndex) != null)
+                {
+                    continue;
+                }
+
+                BlastItemConfig config = pendingItems.Dequeue();
+                SpawnItem(config.Color, config.Power, slotIndex, true);
             }
         }
 
-        private void SpawnItem(BlockColor color, int power, int index, int total)
+        private void SpawnItem(BlockColor color, int power, int slotIndex, bool isPreview)
         {
             if (blastItemPrefab == null || boardController == null)
             {
@@ -156,7 +176,7 @@ namespace ThisIsBlast.Gameplay
             }
 
             Transform parent = spawnRoot != null ? spawnRoot : transform;
-            Vector3 position = GetItemPosition(index, total);
+            Vector3 position = isPreview ? GetPreviewItemPosition(slotIndex) : GetActiveSlotPosition(slotIndex);
 
             BlastItem item = Instantiate(blastItemPrefab, position, Quaternion.identity, parent);
             item.name = $"BlastItem_{color}_{power}";
@@ -170,18 +190,27 @@ namespace ThisIsBlast.Gameplay
             }
 
             spawnedItems.Add(item);
-            visibleItems.Add(item);
+            itemSlots[item] = slotIndex;
+
+            if (isPreview)
+            {
+                previewItems.Add(item);
+            }
+            else
+            {
+                visibleItems.Add(item);
+            }
         }
 
-        private Vector3 GetItemPosition(int index, int total)
+        private Vector3 GetPreviewItemPosition(int index)
         {
             float boardCenterX = boardController.OriginPosition.x
                 + (boardController.Width - 1) * boardController.CellSize * 0.5f;
             float boardBottomZ = boardController.OriginPosition.z - boardController.CellSize * 0.5f;
-            float firstX = boardCenterX - (total - 1) * itemSpacing * 0.5f;
+            float firstX = boardCenterX - (visibleItemCount - 1) * activeSlotSpacing * 0.5f;
 
             return new Vector3(
-                firstX + index * itemSpacing,
+                firstX + index * activeSlotSpacing,
                 boardController.BoardPlaneY,
                 boardBottomZ - boardBottomOffset);
         }
@@ -191,7 +220,7 @@ namespace ThisIsBlast.Gameplay
             float boardCenterX = boardController.OriginPosition.x
                 + (boardController.Width - 1) * boardController.CellSize * 0.5f;
             float boardBottomZ = boardController.OriginPosition.z - boardController.CellSize * 0.5f;
-            float firstX = boardCenterX - (activeSlotCount - 1) * activeSlotSpacing * 0.5f;
+            float firstX = boardCenterX - (visibleItemCount - 1) * activeSlotSpacing * 0.5f;
 
             return new Vector3(
                 firstX + index * activeSlotSpacing,
@@ -220,7 +249,7 @@ namespace ThisIsBlast.Gameplay
                 }
             }
 
-            for (int i = 0; i < activeSlotCount; i++)
+            for (int i = 0; i < visibleItemCount; i++)
             {
                 GameObject slotObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 slotObject.name = $"ActiveSlot_{i + 1}";
@@ -264,12 +293,12 @@ namespace ThisIsBlast.Gameplay
             for (int i = 0; i < visibleItems.Count; i++)
             {
                 BlastItem item = visibleItems[i];
-                if (item == null)
+                if (item == null || !itemSlots.TryGetValue(item, out int slotIndex))
                 {
                     continue;
                 }
 
-                item.transform.position = GetItemPosition(i, Mathf.Max(visibleItemCount, 1));
+                item.transform.position = GetActiveSlotPosition(slotIndex);
             }
         }
 
@@ -278,31 +307,70 @@ namespace ThisIsBlast.Gameplay
             for (int i = 0; i < activeItems.Count; i++)
             {
                 BlastItem item = activeItems[i];
-                if (item == null)
+                if (item == null || !itemSlots.TryGetValue(item, out int slotIndex))
                 {
                     continue;
                 }
 
-                item.transform.position = GetActiveSlotPosition(i);
+                item.transform.position = GetActiveSlotPosition(slotIndex);
             }
         }
 
         private void ConsumeActiveItem(BlastItem item)
         {
+            itemSlots.TryGetValue(item, out int slotIndex);
             spawnedItems.Remove(item);
             activeItems.Remove(item);
+            itemSlots.Remove(item);
 
             if (item != null)
             {
                 Destroy(item.gameObject);
             }
 
-            RepositionActiveItems();
+            PromotePreviewItem(slotIndex);
+            FillPreviewItems();
+        }
+
+        private void PromotePreviewItem(int slotIndex)
+        {
+            BlastItem item = FindItemInSlot(previewItems, slotIndex);
+            if (item == null)
+            {
+                FillVisibleItems();
+                return;
+            }
+
+            previewItems.Remove(item);
+            visibleItems.Add(item);
+            item.transform.DOMove(GetActiveSlotPosition(slotIndex), 0.14f).SetEase(Ease.OutQuad);
+        }
+
+        private bool IsTopSlotOccupied(int slotIndex)
+        {
+            return FindItemInSlot(visibleItems, slotIndex) != null
+                || FindItemInSlot(activeItems, slotIndex) != null;
+        }
+
+        private BlastItem FindItemInSlot(List<BlastItem> items, int slotIndex)
+        {
+            for (int i = 0; i < items.Count; i++)
+            {
+                BlastItem item = items[i];
+                if (item != null
+                    && itemSlots.TryGetValue(item, out int itemSlotIndex)
+                    && itemSlotIndex == slotIndex)
+                {
+                    return item;
+                }
+            }
+
+            return null;
         }
 
         private void CheckLoseCondition()
         {
-            if (loseConditionEvaluator == null || !loseConditionEvaluator.ShouldLose(activeItems, activeSlotCount))
+            if (loseConditionEvaluator == null || !loseConditionEvaluator.ShouldLose(activeItems, visibleItemCount))
             {
                 return;
             }

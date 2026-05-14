@@ -151,17 +151,25 @@ namespace ThisIsBlast.Gameplay
             }
 
             inFlightProjectileCount++;
+            Vector3 shotDirection = targetBlock.transform.position - item.transform.position;
+            shotDirection.y = 0f;
+
             ProjectileController.Create(
                 item.Color,
                 item.transform.position,
                 projectileScale,
                 projectileSpeed,
                 targetBlock,
+                shotDirection,
                 levelController,
                 HandleProjectileFinished);
         }
 
-        private void HandleProjectileFinished(Block targetBlock, bool hitTarget)
+        private void HandleProjectileFinished(
+            Block targetBlock,
+            bool hitTarget,
+            Vector3 hitPosition,
+            Vector3 impactDirection)
         {
             if (targetBlock != null
                 && hitTarget
@@ -170,9 +178,18 @@ namespace ThisIsBlast.Gameplay
                 && levelController != null
                 && levelController.State == GameState.Playing)
             {
-                boardController.RemoveBlock(targetBlock);
-                boardGravity.ApplyGravity(boardController);
-                levelController.CheckWinCondition();
+                targetBlock.PlayDestroyAnimation(
+                    hitPosition,
+                    impactDirection,
+                    () =>
+                    {
+                        boardController.RemoveBlock(targetBlock);
+                        boardGravity.ApplyGravity(boardController);
+                        levelController.CheckWinCondition();
+                        inFlightProjectileCount = Mathf.Max(0, inFlightProjectileCount - 1);
+                    });
+
+                return;
             }
             else if (targetBlock != null)
             {

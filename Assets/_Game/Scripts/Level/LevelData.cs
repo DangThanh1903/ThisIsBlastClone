@@ -69,7 +69,6 @@ namespace ThisIsBlast.Gameplay
             int x,
             int y,
             BlockColor color,
-            int hp = 1,
             BlockSpecialType specialType = BlockSpecialType.None)
         {
             if (!IsInside(x, y))
@@ -78,7 +77,7 @@ namespace ThisIsBlast.Gameplay
             }
 
             EnsureCellArray();
-            cells[ToIndex(x, y)] = LevelCellData.Block(color, hp, specialType);
+            cells[ToIndex(x, y)] = LevelCellData.Block(color, specialType);
         }
 
         public void SetEmpty(int x, int y)

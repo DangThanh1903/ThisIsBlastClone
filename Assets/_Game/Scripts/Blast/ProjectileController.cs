@@ -9,7 +9,8 @@ namespace ThisIsBlast.Gameplay
 
         private Block targetBlock;
         private LevelController levelController;
-        private Action<Block, bool> onFinished;
+        private Action<Block, bool, Vector3, Vector3> onFinished;
+        private Vector3 impactDirection;
         private float speed;
 
         public static ProjectileController Create(
@@ -18,8 +19,9 @@ namespace ThisIsBlast.Gameplay
             float projectileScale,
             float projectileSpeed,
             Block target,
+            Vector3 shotDirection,
             LevelController level,
-            Action<Block, bool> finishedCallback)
+            Action<Block, bool, Vector3, Vector3> finishedCallback)
         {
             GameObject projectile = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             projectile.name = $"Projectile_{color}";
@@ -42,20 +44,22 @@ namespace ThisIsBlast.Gameplay
             }
 
             ProjectileController controller = projectile.AddComponent<ProjectileController>();
-            controller.Configure(projectileSpeed, target, level, finishedCallback);
+            controller.Configure(projectileSpeed, target, shotDirection, level, finishedCallback);
             return controller;
         }
 
         private void Configure(
             float projectileSpeed,
             Block target,
+            Vector3 shotDirection,
             LevelController level,
-            Action<Block, bool> finishedCallback)
+            Action<Block, bool, Vector3, Vector3> finishedCallback)
         {
             speed = projectileSpeed;
             targetBlock = target;
             levelController = level;
             onFinished = finishedCallback;
+            impactDirection = shotDirection.sqrMagnitude > 0.0001f ? shotDirection.normalized : Vector3.forward;
         }
 
         private void Update()
@@ -81,12 +85,14 @@ namespace ThisIsBlast.Gameplay
         private void Finish(bool hitTarget)
         {
             Block finishedTarget = targetBlock;
-            Action<Block, bool> finishedCallback = onFinished;
+            Action<Block, bool, Vector3, Vector3> finishedCallback = onFinished;
+            Vector3 finishedPosition = transform.position;
+            Vector3 finishedDirection = impactDirection;
 
             targetBlock = null;
             onFinished = null;
 
-            finishedCallback?.Invoke(finishedTarget, hitTarget);
+            finishedCallback?.Invoke(finishedTarget, hitTarget, finishedPosition, finishedDirection);
             Destroy(gameObject);
         }
     }

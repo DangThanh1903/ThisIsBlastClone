@@ -17,8 +17,8 @@ namespace ThisIsBlast.EditorTools
         private const string Level01Path = RootPath + "/ScriptableObjects/Levels/Level_01.asset";
         private const string Level02Path = RootPath + "/ScriptableObjects/Levels/Level_02.asset";
 
-        private const string DefaultBlockModelPath = "Assets/Models/Cube1.obj";
-        private const string DefaultBlastItemModelPath = "Assets/Models/Ball.obj";
+        private const string DefaultBlockModelPath = RootPath + "/Models/Cube1.obj";
+        private const string DefaultBlastItemModelPath = RootPath + "/Models/Ball.obj";
 
         [MenuItem("Tools/This Is Blast/Build Gameplay Prototype")]
         public static void Build()
@@ -64,6 +64,10 @@ namespace ThisIsBlast.EditorTools
         private static void EnsureProjectFolders()
         {
             EnsureFolder(RootPath + "/Scenes");
+            EnsureFolder(RootPath + "/Models");
+            EnsureFolder(RootPath + "/Fonts");
+            EnsureFolder(RootPath + "/Sounds");
+            EnsureFolder(RootPath + "/Sprites");
             EnsureFolder(RootPath + "/Scripts/Core");
             EnsureFolder(RootPath + "/Scripts/Board");
             EnsureFolder(RootPath + "/Scripts/Blast");
@@ -112,6 +116,7 @@ namespace ThisIsBlast.EditorTools
             Block block = blockObject.AddComponent<Block>();
 
             SetObjectReference(block, "blockView", blockView);
+            SetObjectReference(block, "visualRoot", visual.transform);
 
             GameObject prefabObject = PrefabUtility.SaveAsPrefabAsset(blockObject, BlockPrefabPath);
             Object.DestroyImmediate(blockObject);
@@ -382,9 +387,7 @@ namespace ThisIsBlast.EditorTools
             SetObjectReference(blastItemSpawner, "shotController", blastShotController);
             SetObjectReference(blastItemSpawner, "loseConditionEvaluator", loseConditionEvaluator);
             SetObjectReference(blastItemSpawner, "spawnRoot", blastRoot);
-            SetFloat(blastItemSpawner, "itemSpacing", 1.25f);
             SetFloat(blastItemSpawner, "boardBottomOffset", 1.25f);
-            SetInt(blastItemSpawner, "activeSlotCount", 5);
             SetFloat(blastItemSpawner, "activeSlotSpacing", 0.85f);
             SetFloat(blastItemSpawner, "activeSlotBoardOffset", 0.35f);
             SetFloat(blastItemSpawner, "itemScale", 0.75f);
