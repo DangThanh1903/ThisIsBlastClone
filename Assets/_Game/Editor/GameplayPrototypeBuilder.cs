@@ -254,7 +254,17 @@ namespace ThisIsBlast.EditorTools
             levelData.SetWinCondition(WinConditionType.ClearAllBlocks);
             levelData.SetStartingBlastItems(
                 new BlastItemConfig(BlockColor.Yellow, 44),
-                new BlastItemConfig(BlockColor.Red, 60));
+                new BlastItemConfig(BlockColor.Red, 30),
+                new BlastItemConfig(BlockColor.Yellow, 20),
+                new BlastItemConfig(BlockColor.Red, 20),
+                new BlastItemConfig(BlockColor.Yellow, 20),
+                new BlastItemConfig(BlockColor.Red, 20),
+                new BlastItemConfig(BlockColor.Yellow, 20),
+                new BlastItemConfig(BlockColor.Red, 20),
+                new BlastItemConfig(BlockColor.Yellow, 20),
+                new BlastItemConfig(BlockColor.Red, 20),
+                new BlastItemConfig(BlockColor.Yellow, 20),
+                new BlastItemConfig(BlockColor.Red, 20));
 
             for (int y = 0; y < levelData.Height; y++)
             {
@@ -287,7 +297,13 @@ namespace ThisIsBlast.EditorTools
                 new BlastItemConfig(BlockColor.Blue, 30),
                 new BlastItemConfig(BlockColor.Red, 30),
                 new BlastItemConfig(BlockColor.Blue, 30),
-                new BlastItemConfig(BlockColor.Green, 10));
+                new BlastItemConfig(BlockColor.Green, 10),
+                new BlastItemConfig(BlockColor.Yellow, 20),
+                new BlastItemConfig(BlockColor.Red, 20),
+                new BlastItemConfig(BlockColor.Blue, 20),
+                new BlastItemConfig(BlockColor.Green, 20),
+                new BlastItemConfig(BlockColor.Yellow, 20),
+                new BlastItemConfig(BlockColor.Red, 20));
 
             BlockColor[][] rows =
             {
@@ -389,9 +405,13 @@ namespace ThisIsBlast.EditorTools
             SetObjectReference(blastItemSpawner, "spawnRoot", blastRoot);
             SetFloat(blastItemSpawner, "boardBottomOffset", 1.25f);
             SetFloat(blastItemSpawner, "activeSlotSpacing", 0.85f);
+            SetFloat(blastItemSpawner, "queueColumnSpacing", 0.85f);
+            SetFloat(blastItemSpawner, "queueRowSpacing", 0.72f);
             SetFloat(blastItemSpawner, "activeSlotBoardOffset", 0.35f);
             SetFloat(blastItemSpawner, "itemScale", 0.75f);
-            SetInt(blastItemSpawner, "visibleItemCount", 3);
+            SetInt(blastItemSpawner, "activeSlotCount", 5);
+            SetInt(blastItemSpawner, "queueColumnCount", 3);
+            SetInt(blastItemSpawner, "queueVisibleRows", 3);
             SetObjectReference(blastShotController, "boardController", boardController);
             SetObjectReference(blastShotController, "boardGravity", boardGravity);
             SetObjectReference(blastShotController, "levelController", levelController);

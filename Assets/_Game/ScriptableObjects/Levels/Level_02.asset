@@ -350,4 +350,16 @@ MonoBehaviour:
     power: 30
   - color: 3
     power: 10
+  - color: 0
+    power: 20
+  - color: 1
+    power: 20
+  - color: 2
+    power: 20
+  - color: 3
+    power: 20
+  - color: 0
+    power: 20
+  - color: 1
+    power: 20
   winCondition: 0

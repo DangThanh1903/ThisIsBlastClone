@@ -669,9 +669,13 @@ MonoBehaviour:
   activeSlotVisualRoot: {fileID: 0}
   boardBottomOffset: 1.25
   activeSlotSpacing: 0.85
+  queueColumnSpacing: 0.85
+  queueRowSpacing: 0.72
   activeSlotBoardOffset: 0.35
   itemScale: 0.75
-  visibleItemCount: 3
+  activeSlotCount: 5
+  queueColumnCount: 3
+  queueVisibleRows: 3
   activeSlotColor: {r: 0.16, g: 0.33, b: 0.48, a: 0.85}
   logSpawnSummary: 1
 --- !u!114 &1015107586

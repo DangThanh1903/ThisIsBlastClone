@@ -341,5 +341,25 @@ MonoBehaviour:
   - color: 0
     power: 44
   - color: 1
-    power: 60
+    power: 30
+  - color: 0
+    power: 20
+  - color: 1
+    power: 20
+  - color: 0
+    power: 20
+  - color: 1
+    power: 20
+  - color: 0
+    power: 20
+  - color: 1
+    power: 20
+  - color: 0
+    power: 20
+  - color: 1
+    power: 20
+  - color: 0
+    power: 20
+  - color: 1
+    power: 20
   winCondition: 0
